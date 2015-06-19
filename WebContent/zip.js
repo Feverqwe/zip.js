@@ -651,6 +651,13 @@
 					}
 					reader.readUint8Array(datalength, reader.size - datalength, function(bytes) {
 						var i, index = 0, entries = [], entry, filename, comment, data = getDataHelper(bytes.length, bytes);
+						var offset = 0;
+						for (i = 0; i < data.view.byteLength; i++) {
+							if (data.view.getUint32(i) === 0x504b0102) {
+								index = offset = i;
+								break;
+							}
+						}
 						for (i = 0; i < fileslength; i++) {
 							entry = new Entry();
 							entry._worker = worker;
@@ -662,6 +669,7 @@
 							entry.commentLength = data.view.getUint16(index + 32, true);
 							entry.directory = ((data.view.getUint8(index + 38) & 0x10) == 0x10);
 							entry.offset = data.view.getUint32(index + 42, true);
+							entry.offset += offset;
 							filename = getString(data.array.subarray(index + 46, index + 46 + entry.filenameLength));
 							entry.filename = ((entry.bitFlag & 0x0800) === 0x0800) ? decodeUTF8(filename) : decodeASCII(filename);
 							if (!entry.directory && entry.filename.charAt(entry.filename.length - 1) == "/")
